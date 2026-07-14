@@ -1,6 +1,8 @@
 import { createElement, clearElement } from '../renderer';
 import { QuizResult, Question, Answer } from '../../core/types';
 
+const FEEDBACK_FORM_URL = 'REPLACE_WITH_YOUR_GOOGLE_FORM_LINK';
+
 export interface ResultScreenCallbacks {
   onRestart: () => void;
   onReview: () => void;
@@ -55,6 +57,20 @@ export function renderResultScreen(
   screen.appendChild(levelCard);
   screen.appendChild(skillBreakdown);
   screen.appendChild(actions);
+
+  if (FEEDBACK_FORM_URL !== 'REPLACE_WITH_YOUR_GOOGLE_FORM_LINK') {
+    const feedbackSection = createElement('div', 'feedback-section');
+    const feedbackText = createElement('p', 'feedback-text',
+      'Found an unclear question or a bug? Your feedback helps improve the quiz.'
+    );
+    const feedbackLink = createElement('a', 'feedback-link', 'Report a question or share feedback');
+    feedbackLink.setAttribute('href', FEEDBACK_FORM_URL);
+    feedbackLink.setAttribute('target', '_blank');
+    feedbackLink.setAttribute('rel', 'noopener noreferrer');
+    feedbackSection.appendChild(feedbackText);
+    feedbackSection.appendChild(feedbackLink);
+    screen.appendChild(feedbackSection);
+  }
 
   container.appendChild(screen);
 }
