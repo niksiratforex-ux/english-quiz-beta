@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.mimocode/
+mimo2.exe
+*.log
