@@ -1,5 +1,5 @@
 ﻿import { createElement, clearElement } from '../renderer';
-import { QuizResult, Question, Answer, SkillResult } from '../../core/types';
+import { QuizResult, Question, Answer, SkillResult, AdaptiveResult } from '../../core/types';
 import { getReadingPassages, getListeningClips } from '../../data';
 
 const FEEDBACK_FORM_PLACEHOLDER = "REPLACE_WITH_YOUR_GOOGLE_FORM_LINK";
@@ -21,22 +21,11 @@ export function renderResultScreen(
 
   const screen = createElement('div', 'screen result-screen');
 
-  // A. Main result card
   screen.appendChild(createMainResultCard(result));
-
-  // B. Skill breakdown
   screen.appendChild(createSkillBreakdown(result));
-
-  // C. Strengths and needs practice
   screen.appendChild(createStrengthsSection(result));
-
-  // D. Recommended next step
   screen.appendChild(createNextStepSection(result));
 
-  // Sample size note
-  screen.appendChild(createSampleNote());
-
-  // Actions
   const actions = createElement('div', 'result-actions');
   const restartButton = createElement('button', 'restart-button', 'Try Again');
   restartButton.addEventListener('click', callbacks.onRestart);
@@ -46,17 +35,12 @@ export function renderResultScreen(
   actions.appendChild(reviewButton);
   screen.appendChild(actions);
 
-  // F. Feedback form
   if (hasFeedbackForm) {
     const feedbackSection = createElement('div', 'feedback-section');
-    const feedbackText = createElement('p', 'feedback-text',
-      'Found an unclear question or a bug? Your feedback helps improve the quiz.'
-    );
-    const feedbackLink = createElement('a', 'feedback-link', 'Report a question or share feedback');
+    const feedbackLink = createElement('a', 'feedback-link', 'Share feedback or report an issue');
     feedbackLink.setAttribute('href', FEEDBACK_FORM_URL);
     feedbackLink.setAttribute('target', '_blank');
     feedbackLink.setAttribute('rel', 'noopener noreferrer');
-    feedbackSection.appendChild(feedbackText);
     feedbackSection.appendChild(feedbackLink);
     screen.appendChild(feedbackSection);
   }
@@ -64,12 +48,135 @@ export function renderResultScreen(
   container.appendChild(screen);
 }
 
+export function renderAdaptiveResultScreen(
+  container: HTMLElement,
+  result: AdaptiveResult,
+  callbacks: ResultScreenCallbacks
+): void {
+  clearElement(container);
+
+  const screen = createElement('div', 'screen result-screen');
+
+  const mainCard = createElement('div', 'result-card-main');
+
+  const levelLabel = createElement('p', 'result-level-label', 'Estimated Placement Level');
+  const levelValue = createElement('h2', 'result-level-value', result.overallLevel + ' (' + result.overallLevelCode + ')');
+  const levelDescription = createElement('p', 'result-level-desc',
+    'Based on adaptive questions across vocabulary, grammar, reading, and listening.'
+  );
+
+  const confidenceRow = createElement('div', 'adaptive-confidence-row');
+  const confidenceLabel = createElement('span', 'adaptive-confidence-label', 'Confidence: ');
+  const confidenceValue = createElement('span', 'adaptive-confidence-value adaptive-confidence-' + result.confidence.toLowerCase(), result.confidence);
+  confidenceRow.appendChild(confidenceLabel);
+  confidenceRow.appendChild(confidenceValue);
+
+  const confidenceNote = createElement('p', 'adaptive-confidence-note', result.confidenceNote);
+
+  const disclaimer = createElement('p', 'result-disclaimer',
+    'This is a practice placement, not an official CEFR exam.'
+  );
+
+  mainCard.appendChild(levelLabel);
+  mainCard.appendChild(levelValue);
+  mainCard.appendChild(levelDescription);
+  mainCard.appendChild(confidenceRow);
+  mainCard.appendChild(confidenceNote);
+  mainCard.appendChild(disclaimer);
+  screen.appendChild(mainCard);
+
+  const skillSection = createElement('div', 'result-section');
+  skillSection.appendChild(createElement('h3', 'result-section-title', 'Skill Breakdown'));
+
+  const skillGrid = createElement('div', 'skill-grid');
+  result.skillResults.forEach(skill => {
+    const card = createElement('div', 'skill-card skill-card-' + skill.band);
+
+    const header = createElement('div', 'skill-card-header');
+    header.appendChild(createElement('span', 'skill-card-name', skill.skill));
+    if (skill.estimatedLevel) {
+      header.appendChild(createElement('span', 'skill-card-level', skill.estimatedLevel));
+    }
+    header.appendChild(createElement('span', 'skill-card-band skill-band-' + skill.band, skill.bandLabel));
+    card.appendChild(header);
+
+    const score = createElement('div', 'skill-card-score');
+    score.innerHTML = '<strong>' + skill.correct + '</strong> / ' + skill.total + '  (' + skill.percentage + '%)';
+    card.appendChild(score);
+
+    const bar = createElement('div', 'skill-card-bar');
+    const fill = createElement('div', 'skill-card-bar-fill skill-bar-' + skill.band);
+    fill.style.width = skill.percentage + '%';
+    bar.appendChild(fill);
+    card.appendChild(bar);
+
+    skillGrid.appendChild(card);
+  });
+  skillSection.appendChild(skillGrid);
+  screen.appendChild(skillSection);
+
+  const summarySection = createElement('div', 'result-section');
+  summarySection.appendChild(createElement('h3', 'result-section-title', 'Test Summary'));
+
+  const summaryCard = createElement('div', 'next-step-card');
+  const summaryText = createElement('p', 'next-step-text',
+    result.totalQuestions + ' questions across ' + result.skillResults.map(s => s.skill).join(', ') + '.'
+  );
+  summaryCard.appendChild(summaryText);
+  if (result.usedFallback) {
+    summaryCard.appendChild(createElement('p', 'adaptive-fallback-note',
+      'Some items were selected from the nearest available level.'
+    ));
+  }
+  summarySection.appendChild(summaryCard);
+  screen.appendChild(summarySection);
+
+  const recSection = createElement('div', 'result-section');
+  recSection.appendChild(createElement('h3', 'result-section-title', 'Suggested Next Step'));
+
+  const recCard = createElement('div', 'next-step-card');
+  recCard.appendChild(createElement('p', 'next-step-text', getAdaptiveRecommendation(result)));
+  recSection.appendChild(recCard);
+  screen.appendChild(recSection);
+
+  const actions = createElement('div', 'result-actions');
+  const restartButton = createElement('button', 'restart-button', 'Try Again');
+  restartButton.addEventListener('click', callbacks.onRestart);
+  const reviewButton = createElement('button', 'review-button', 'Review Answers');
+  reviewButton.addEventListener('click', callbacks.onReview);
+  actions.appendChild(restartButton);
+  actions.appendChild(reviewButton);
+  screen.appendChild(actions);
+
+  if (hasFeedbackForm) {
+    const feedbackSection = createElement('div', 'feedback-section');
+    const feedbackLink = createElement('a', 'feedback-link', 'Share feedback or report an issue');
+    feedbackLink.setAttribute('href', FEEDBACK_FORM_URL);
+    feedbackLink.setAttribute('target', '_blank');
+    feedbackLink.setAttribute('rel', 'noopener noreferrer');
+    feedbackSection.appendChild(feedbackLink);
+    screen.appendChild(feedbackSection);
+  }
+
+  container.appendChild(screen);
+}
+
+function getAdaptiveRecommendation(result: AdaptiveResult): string {
+  const strongest = result.skillResults.reduce((max, s) => s.percentage > max.percentage ? s : max, result.skillResults[0]);
+  const weakest = result.skillResults.reduce((min, s) => s.percentage < min.percentage ? s : min, result.skillResults[0]);
+
+  if (strongest && weakest && strongest.skill !== weakest.skill) {
+    return 'You appear strongest in ' + strongest.skill.toLowerCase() + '. Next, work on ' + weakest.skill.toLowerCase() + '.';
+  }
+
+  return 'Try a single-skill quiz to get a more detailed estimate.';
+}
+
 function createMainResultCard(result: QuizResult): HTMLElement {
   const card = createElement('div', 'result-card-main');
 
   const isReading = result.quizType === 'reading';
   const isListening = result.quizType === 'listening';
-  const isSingleSkill = isReading || isListening || result.quizType === 'vocabulary' || result.quizType === 'grammar';
 
   let levelLabelText = 'Estimated Level';
   if (isReading) levelLabelText = 'Estimated Reading Level';
@@ -91,11 +198,9 @@ function createMainResultCard(result: QuizResult): HTMLElement {
   scoreRow.appendChild(scoreTotal);
   scoreRow.appendChild(scorePct);
 
-  let disclaimerText = 'This is a short practice quiz for an estimated English level. It is not an official CEFR exam.';
-  if (isSingleSkill) {
-    disclaimerText = 'This result is based on a short practice set, so treat it as a directional estimate.';
-  }
-  const disclaimer = createElement('p', 'result-disclaimer', disclaimerText);
+  const disclaimer = createElement('p', 'result-disclaimer',
+    'This is a practice estimate, not an official CEFR certification.'
+  );
 
   card.appendChild(levelLabel);
   card.appendChild(levelValue);
@@ -107,8 +212,7 @@ function createMainResultCard(result: QuizResult): HTMLElement {
 
 function createSkillBreakdown(result: QuizResult): HTMLElement {
   const section = createElement('div', 'result-section');
-  const title = createElement('h3', 'result-section-title', 'Skill Breakdown');
-  section.appendChild(title);
+  section.appendChild(createElement('h3', 'result-section-title', 'Skill Breakdown'));
 
   if (result.skillResults.length === 0) {
     section.appendChild(createElement('p', 'result-empty-note', 'No skills to display.'));
@@ -122,10 +226,9 @@ function createSkillBreakdown(result: QuizResult): HTMLElement {
   section.appendChild(grid);
 
   if (result.untestedSkills.length > 0) {
-    const untestedNote = createElement('p', 'result-untested-note',
-      result.untestedSkills.join(' and ') + (result.untestedSkills.length === 1 ? ' was' : ' were') + ' not part of this session.'
-    );
-    section.appendChild(untestedNote);
+    section.appendChild(createElement('p', 'result-untested-note',
+      result.untestedSkills.join(' and ') + ' ' + (result.untestedSkills.length === 1 ? 'was' : 'were') + ' not tested in this session.'
+    ));
   }
 
   return section;
@@ -135,10 +238,8 @@ function createSkillCard(skill: SkillResult): HTMLElement {
   const card = createElement('div', 'skill-card skill-card-' + skill.band);
 
   const header = createElement('div', 'skill-card-header');
-  const name = createElement('span', 'skill-card-name', skill.skill);
-  const band = createElement('span', 'skill-card-band skill-band-' + skill.band, skill.bandLabel);
-  header.appendChild(name);
-  header.appendChild(band);
+  header.appendChild(createElement('span', 'skill-card-name', skill.skill));
+  header.appendChild(createElement('span', 'skill-card-band skill-band-' + skill.band, skill.bandLabel));
 
   const score = createElement('div', 'skill-card-score');
   score.innerHTML = '<strong>' + skill.correct + '</strong> / ' + skill.total + '  (' + skill.percentage + '%)';
@@ -156,8 +257,7 @@ function createSkillCard(skill: SkillResult): HTMLElement {
 
 function createStrengthsSection(result: QuizResult): HTMLElement {
   const section = createElement('div', 'result-section');
-  const title = createElement('h3', 'result-section-title', 'Strengths and Needs Practice');
-  section.appendChild(title);
+  section.appendChild(createElement('h3', 'result-section-title', 'Strengths & Areas to Improve'));
 
   const strengths = result.skillResults.filter(s => s.band === 'strong' || s.band === 'solid');
   const needs = result.skillResults.filter(s => s.band === 'needs-practice' || s.band === 'developing');
@@ -165,8 +265,7 @@ function createStrengthsSection(result: QuizResult): HTMLElement {
   const grid = createElement('div', 'strengths-grid');
 
   const strengthsCol = createElement('div', 'strengths-col');
-  const strengthsHead = createElement('h4', 'strengths-heading strengths-heading-good', 'Strengths');
-  strengthsCol.appendChild(strengthsHead);
+  strengthsCol.appendChild(createElement('h4', 'strengths-heading strengths-heading-good', 'Strengths'));
   if (strengths.length > 0) {
     strengths.forEach(s => {
       strengthsCol.appendChild(createElement('p', 'strengths-item', s.skill + ': ' + s.bandLabel + ' (' + s.percentage + '%)'));
@@ -176,8 +275,7 @@ function createStrengthsSection(result: QuizResult): HTMLElement {
   }
 
   const needsCol = createElement('div', 'needs-col');
-  const needsHead = createElement('h4', 'strengths-heading strengths-heading-need', 'Needs Practice');
-  needsCol.appendChild(needsHead);
+  needsCol.appendChild(createElement('h4', 'strengths-heading strengths-heading-need', 'Areas to Improve'));
   if (needs.length > 0) {
     needs.forEach(s => {
       needsCol.appendChild(createElement('p', 'needs-item', s.skill + ': ' + s.bandLabel + ' (' + s.percentage + '%)'));
@@ -194,21 +292,13 @@ function createStrengthsSection(result: QuizResult): HTMLElement {
 
 function createNextStepSection(result: QuizResult): HTMLElement {
   const section = createElement('div', 'result-section');
-  const title = createElement('h3', 'result-section-title', 'Recommended Next Step');
-  section.appendChild(title);
+  section.appendChild(createElement('h3', 'result-section-title', 'Suggested Next Step'));
 
   const suggestion = getPersonalizedSuggestion(result);
   const card = createElement('div', 'next-step-card');
-  const text = createElement('p', 'next-step-text', suggestion);
-  card.appendChild(text);
+  card.appendChild(createElement('p', 'next-step-text', suggestion));
   section.appendChild(card);
   return section;
-}
-
-function createSampleNote(): HTMLElement {
-  return createElement('p', 'result-sample-note',
-    'This result is based on a short practice set, so treat it as a directional estimate.'
-  );
 }
 
 function getPersonalizedSuggestion(result: QuizResult): string {
@@ -216,35 +306,35 @@ function getPersonalizedSuggestion(result: QuizResult): string {
 
   if (result.percentage >= 80) {
     if (result.untestedSkills.length > 0) {
-      return 'Next: try ' + result.untestedSkills[0].toLowerCase() + ' to confirm your placement across more skills.';
+      return 'Try ' + result.untestedSkills[0].toLowerCase() + ' to confirm your level across more skills.';
     }
-    return 'Next: challenge yourself with questions at the next CEFR level.';
+    return 'Challenge yourself with questions at a higher level.';
   }
 
   if (result.percentage >= 60) {
     if (weakest) {
-      return 'Next: practice ' + weakest.skill.toLowerCase() + ' to strengthen your weakest area.';
+      return 'Practice ' + weakest.skill.toLowerCase() + ' to strengthen your weakest area.';
     }
-    return 'Next: review ' + result.levelCode + ' material to solidify your foundation.';
+    return 'Review ' + result.levelCode + ' material to solidify your foundation.';
   }
 
   if (result.percentage >= 40) {
     if (weakest) {
-      return 'Next: focus on ' + weakest.skill.toLowerCase() + ' at the ' + result.levelCode + ' level to build a stronger base.';
+      return 'Focus on ' + weakest.skill.toLowerCase() + ' at the ' + result.levelCode + ' level.';
     }
-    return 'Next: review ' + result.levelCode + ' vocabulary and grammar fundamentals.';
+    return 'Review ' + result.levelCode + ' vocabulary and grammar fundamentals.';
   }
 
-  return 'Next: start with ' + result.levelCode + ' basics to build a solid foundation.';
+  return 'Start with ' + result.levelCode + ' basics to build a solid foundation.';
 }
 
 function getLevelDescription(level: string): string {
   const descriptions: Record<string, string> = {
-    'Beginner': 'You have basic vocabulary and simple sentence structures.',
-    'Elementary': 'You can understand common everyday expressions and basic communication.',
-    'Intermediate': 'You can handle main points of familiar topics and general descriptions.',
-    'Upper-Intermediate': 'You can understand detailed text and engage in spontaneous conversation.',
-    'Advanced': 'You have near-native fluency with complex structures.'
+    'Beginner': 'Basic vocabulary and simple sentence structures.',
+    'Elementary': 'Common everyday expressions and basic communication.',
+    'Intermediate': 'Main points of familiar topics and general descriptions.',
+    'Upper-Intermediate': 'Detailed text comprehension and spontaneous conversation.',
+    'Advanced': 'Near-native fluency with complex structures.'
   };
   return descriptions[level] || '';
 }
@@ -260,10 +350,9 @@ export function renderReviewScreen(
   const screen = createElement('div', 'screen review-screen');
 
   const header = createElement('div', 'review-header');
-  const title = createElement('h2', 'review-title', 'Answer Review');
+  header.appendChild(createElement('h2', 'review-title', 'Answer Review'));
   const backButton = createElement('button', 'back-button', 'Back to Results');
   backButton.addEventListener('click', callbacks.onBack);
-  header.appendChild(title);
   header.appendChild(backButton);
 
   const answersList = createElement('div', 'answers-list');
@@ -282,7 +371,7 @@ export function renderReviewScreen(
       const passage = passages.find(p => p.id === question.passageId);
       if (passage) {
         const passageHeader = createElement('div', 'review-passage-header');
-        passageHeader.appendChild(createElement('h3', 'review-passage-title', 'Passage: ' + passage.title));
+        passageHeader.appendChild(createElement('h3', 'review-passage-title', passage.title));
         passageHeader.appendChild(createElement('p', 'review-passage-text', passage.text));
         answersList.appendChild(passageHeader);
       }
@@ -293,7 +382,7 @@ export function renderReviewScreen(
       const clip = clips.find(c => c.id === question.clipId);
       if (clip) {
         const clipHeader = createElement('div', 'review-clip-header');
-        clipHeader.appendChild(createElement('h3', 'review-clip-title', 'Clip: ' + clip.title));
+        clipHeader.appendChild(createElement('h3', 'review-clip-title', clip.title));
         clipHeader.appendChild(createElement('p', 'review-clip-script', clip.script));
         answersList.appendChild(clipHeader);
       }

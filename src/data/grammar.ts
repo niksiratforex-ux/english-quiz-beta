@@ -81,8 +81,8 @@ export const grammarQuestions: Question[] = [
     type: 'grammar',
     difficulty: 'A1',
     topic: 'articles',
-    question: 'I want ___ orange, please.',
-    options: ['a', 'the', 'an', 'one'],
+    question: 'I want ___ apple, please.',
+    options: ['a', 'the', 'an', 'some'],
     correctIndex: 2,
     explanation: "Use 'an' before words starting with a vowel sound."
   },
@@ -127,10 +127,10 @@ export const grammarQuestions: Question[] = [
     type: 'grammar',
     difficulty: 'A2',
     topic: 'past-tenses',
-    question: 'She ___ her homework before dinner.',
-    options: ['do', 'did', 'does', 'has done'],
+    question: 'She ___ her homework yesterday evening.',
+    options: ['do', 'did', 'does', 'doing'],
     correctIndex: 1,
-    explanation: "'Did' is the past simple of 'do'."
+    explanation: "'Did' is the past simple of 'do', used with specific past time markers like 'yesterday'."
   },
   {
     id: 'grammar-013',
@@ -243,10 +243,10 @@ export const grammarQuestions: Question[] = [
     type: 'grammar',
     difficulty: 'B1',
     topic: 'future-forms',
-    question: 'I ___ you tomorrow morning.',
-    options: ['will call', 'am going to call', 'call', 'calling'],
-    correctIndex: 0,
-    explanation: "'Will' is used for spontaneous decisions and future promises."
+    question: 'I promise I ___ you tomorrow morning.',
+    options: ['call', 'will call', 'am calling', 'called'],
+    correctIndex: 1,
+    explanation: "'Will' is used for promises and spontaneous decisions."
   },
   {
     id: 'grammar-024',
@@ -293,10 +293,10 @@ export const grammarQuestions: Question[] = [
     type: 'grammar',
     difficulty: 'B1',
     topic: 'future-forms',
-    question: 'I ___ a doctor next Tuesday.',
+    question: 'I have an appointment. I ___ a doctor next Tuesday.',
     options: ['see', 'will see', 'am seeing', 'saw'],
     correctIndex: 2,
-    explanation: "Present continuous can be used for fixed future arrangements."
+    explanation: "Present continuous is used for fixed future arrangements, especially when there is a specific time and place."
   },
   {
     id: 'grammar-029',
@@ -329,10 +329,10 @@ export const grammarQuestions: Question[] = [
     type: 'grammar',
     difficulty: 'B2',
     topic: 'conditionals',
-    question: 'If I ___ rich, I would travel the world.',
-    options: ['am', 'was', 'be', 'were'],
+    question: 'If she ___ here, she would know what to do.',
+    options: ['is', 'was', 'be', 'were'],
     correctIndex: 3,
-    explanation: "Second conditional uses 'were' for all subjects (formal English)."
+    explanation: "Second conditional uses 'were' for all subjects in formal English."
   },
   {
     id: 'grammar-032',
@@ -369,8 +369,8 @@ export const grammarQuestions: Question[] = [
     type: 'grammar',
     difficulty: 'B2',
     topic: 'conditionals',
-    question: 'If I ___ you, I would accept the offer.',
-    options: ['am', 'was', 'were', 'be'],
+    question: 'If she ___ here, she would help us.',
+    options: ['is', 'was', 'were', 'be'],
     correctIndex: 2,
     explanation: "Second conditional uses 'were' for hypothetical situations."
   },
@@ -486,9 +486,9 @@ export const grammarQuestions: Question[] = [
     difficulty: 'C1',
     topic: 'passive-voice',
     question: 'The new law ___ next month by the government.',
-    options: ['is implementing', 'will implement', 'is going to be implemented', 'has implemented'],
-    correctIndex: 0,
-    explanation: "Present continuous passive: is/are being + past participle."
+    options: ['implements', 'will be implemented', 'is implementing', 'has implemented'],
+    correctIndex: 1,
+    explanation: "Future simple passive: will be + past participle, used for future events."
   },
   {
     id: 'grammar-047',

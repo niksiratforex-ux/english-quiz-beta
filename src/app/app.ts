@@ -1,11 +1,14 @@
 ﻿import { QuizEngine } from '../core/quiz-engine';
-import { getQuestions, getReadingPassages, getListeningClips } from '../data';
-import { QuizType, QuizResult } from '../core/types';
+import { getQuestions, getReadingPassages, getListeningClips, getAllQuestions } from '../data';
+import { QuizType, QuizResult, AdaptiveSkill } from '../core/types';
 import { renderStartScreen } from '../ui/screens/start-screen';
 import { renderQuizScreen, showAnswerFeedback, ReadingContext, ListeningContext, enableListeningOptions, updateListeningPlayerPlayCount, destroyListeningPlayer } from '../ui/screens/quiz-screen';
-import { renderResultScreen, renderReviewScreen } from '../ui/screens/result-screen';
+import { renderResultScreen, renderReviewScreen, renderAdaptiveResultScreen } from '../ui/screens/result-screen';
 import { renderErrorScreen } from '../ui/screens/error-screen';
 import { createSpeechService, SpeechService } from '../services/speech-service';
+import { getAdaptiveQuestionsForSession, computeAdaptiveResult } from '../core/adaptive-engine';
+import { getRandomPrompt } from '../data/speaking';
+import { renderSpeakingScreen } from '../ui/screens/speaking-screen';
 
 export class App {
   private container: HTMLElement;
@@ -17,6 +20,11 @@ export class App {
   private maxPlays: number = 2;
   private currentClipId: string | null = null;
   private hasPlayedCurrentClip: boolean = false;
+
+  // Adaptive state
+  private adaptiveMode: boolean = false;
+  private adaptiveSkills: AdaptiveSkill[] = [];
+  private adaptiveSkillCounts: Map<AdaptiveSkill, number> = new Map();
 
   constructor(containerId: string) {
     const container = document.getElementById(containerId);
@@ -54,6 +62,7 @@ export class App {
     this.playCount = 0;
     this.currentClipId = null;
     this.hasPlayedCurrentClip = false;
+    this.adaptiveMode = false;
     renderStartScreen(this.container, {
       onStart: (quizType: QuizType) => this.startQuiz(quizType)
     });
@@ -63,7 +72,12 @@ export class App {
     this.clearAutoAdvanceTimer();
     this.stopSpeech();
 
-    if (quizType === 'listening') {
+    if (quizType === 'speaking') {
+      this.startSpeakingMode();
+      return;
+    }
+
+    if (quizType === 'listening' || quizType === 'adaptive') {
       this.initSpeechService();
       if (!this.speechService!.isSupported) {
         renderErrorScreen(this.container, {
@@ -74,6 +88,30 @@ export class App {
       }
     }
 
+    if (quizType === 'adaptive') {
+      this.adaptiveMode = true;
+      const allQuestions = getAllQuestions();
+      const { questions, skills, skillQuestionCounts } = getAdaptiveQuestionsForSession(allQuestions);
+      this.adaptiveSkills = skills;
+      this.adaptiveSkillCounts = skillQuestionCounts;
+
+      if (questions.length === 0) {
+        renderErrorScreen(this.container, {
+          message: 'No questions available for adaptive placement. Please try again later.',
+          onBack: () => this.showStartScreen()
+        });
+        return;
+      }
+
+      this.playCount = 0;
+      this.currentClipId = null;
+      this.hasPlayedCurrentClip = false;
+      this.engine.startQuiz('adaptive' as QuizType, questions);
+      this.showQuizScreen();
+      return;
+    }
+
+    this.adaptiveMode = false;
     const count = (quizType === 'reading' || quizType === 'listening') ? 9 : 15;
     const questions = getQuestions(quizType, count);
 
@@ -90,6 +128,26 @@ export class App {
     this.hasPlayedCurrentClip = false;
     this.engine.startQuiz(quizType, questions);
     this.showQuizScreen();
+  }
+
+  private startSpeakingMode(): void {
+    if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices) {
+      renderErrorScreen(this.container, {
+        message: 'Your browser does not support microphone recording. Please try a different browser or device.',
+        onBack: () => this.showStartScreen()
+      });
+      return;
+    }
+
+    const prompt = getRandomPrompt();
+    renderSpeakingScreen(this.container, prompt, {
+      onComplete: () => {
+        this.showStartScreen();
+      },
+      onBack: () => {
+        this.showStartScreen();
+      }
+    });
   }
 
   private showQuizScreen(): void {
@@ -133,7 +191,6 @@ export class App {
         const questionsInThisClip = allQuestions.filter(q => q.clipId === question.clipId);
         const questionInClip = questionsInThisClip.indexOf(question) + 1;
 
-        // Reset play state when moving to a new clip
         if (this.currentClipId !== question.clipId) {
           this.currentClipId = question.clipId;
           this.playCount = 0;
@@ -172,6 +229,25 @@ export class App {
       }
     }
 
+    let adaptiveProgress = undefined;
+    if (this.adaptiveMode) {
+      const currentSkill = question.type as AdaptiveSkill;
+      const skillIndex = this.adaptiveSkills.indexOf(currentSkill);
+      const questionsInSkill = this.adaptiveSkillCounts.get(currentSkill) || 0;
+      const questionsAnsweredInSkill = this.engine.getState().answers.filter(a => {
+        const q = this.engine.getState().questions.find(q => q.id === a.questionId);
+        return q && q.type === currentSkill;
+      }).length;
+
+      adaptiveProgress = {
+        currentSkill: currentSkill.charAt(0).toUpperCase() + currentSkill.slice(1),
+        skillIndex: skillIndex + 1,
+        totalSkills: this.adaptiveSkills.length,
+        questionInSkill: questionsAnsweredInSkill + 1,
+        questionsInSkill
+      };
+    }
+
     renderQuizScreen(
       this.container,
       question,
@@ -182,7 +258,6 @@ export class App {
           const timeSpent = Date.now() - this.startTime;
           this.engine.answerQuestion(selectedIndex, timeSpent);
 
-          // Stop audio on answer selection
           if (question.type === 'listening') {
             this.stopSpeech();
           }
@@ -194,14 +269,51 @@ export class App {
             if (this.engine.nextQuestion()) {
               this.showQuizScreen();
             } else {
-              this.showResultScreen();
+              if (this.adaptiveMode) {
+                this.showAdaptiveResultScreen();
+              } else {
+                this.showResultScreen();
+              }
             }
           }, 800);
         }
       },
       readingContext,
-      listeningContext
+      listeningContext,
+      adaptiveProgress
     );
+  }
+
+  private showAdaptiveResultScreen(): void {
+    this.clearAutoAdvanceTimer();
+    this.stopSpeech();
+    destroyListeningPlayer();
+
+    const state = this.engine.getState();
+    const adaptiveResult = computeAdaptiveResult(
+      state.questions,
+      state.answers,
+      this.adaptiveSkillCounts
+    );
+
+    renderAdaptiveResultScreen(this.container, adaptiveResult, {
+      onRestart: () => {
+        this.engine.reset();
+        this.showStartScreen();
+      },
+      onReview: () => {
+        renderReviewScreen(
+          this.container,
+          adaptiveResult.questions,
+          adaptiveResult.answers,
+          {
+            onBack: () => {
+              this.showAdaptiveResultScreen();
+            }
+          }
+        );
+      }
+    });
   }
 
   private showResultScreen(): void {

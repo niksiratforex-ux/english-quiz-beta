@@ -61,10 +61,10 @@ export const vocabularyQuestions: Question[] = [
     type: 'vocabulary',
     difficulty: 'A1',
     topic: 'travel',
-    question: 'Which word means "to go from one place to another"?',
-    options: ['Stay', 'Travel', 'Rest', 'Sleep'],
+    question: 'Which word means "to go on a journey to different places"?',
+    options: ['Stay', 'Journey', 'Rest', 'Sleep'],
     correctIndex: 1,
-    explanation: "'Travel' means to journey from one place to another."
+    explanation: "'Journey' means to travel or go from one place to another."
   },
   {
     id: 'vocab-007',
@@ -313,10 +313,10 @@ export const vocabularyQuestions: Question[] = [
     type: 'vocabulary',
     difficulty: 'B1',
     topic: 'daily-life',
-    question: 'Which word means "to feel worried or nervous"?',
-    options: ['Relax', 'Doubt', 'Enjoy', 'Celebrate'],
+    question: 'Which word means "to feel worried or uncertain about something"?',
+    options: ['Relax', 'Worry', 'Enjoy', 'Celebrate'],
     correctIndex: 1,
-    explanation: "'Doubt' means to feel uncertain or worried about something."
+    explanation: "'Worry' means to feel anxious or concerned about something."
   },
 
   // ═══════════════════════════════════════════
@@ -446,8 +446,8 @@ export const vocabularyQuestions: Question[] = [
     difficulty: 'C1',
     topic: 'collocations',
     question: 'Which word collocates with "commit" to mean doing something illegal?',
-    options: ['Commit a joke', 'Commit a color', 'Commit a shape', 'Commit a crime'],
-    correctIndex: 3,
+    options: ['Commit a promise', 'Commit a mistake', 'Commit a crime', 'Commit a task'],
+    correctIndex: 2,
     explanation: "'Commit a crime' is the standard collocation meaning to do something against the law."
   },
   {
@@ -485,10 +485,10 @@ export const vocabularyQuestions: Question[] = [
     type: 'vocabulary',
     difficulty: 'C1',
     topic: 'collocations',
-    question: 'Which collocation is correct for describing a strong desire?',
+    question: 'Which collocation is correct for expressing a hope or desire?',
     options: ['Have a hunch', 'Form an opinion', 'Reach a goal', 'Make a wish'],
     correctIndex: 3,
-    explanation: "'Make a wish' is the standard collocation for expressing a desire or hope."
+    explanation: "'Make a wish' is the standard collocation for expressing a hope or desire."
   },
   {
     id: 'vocab-047',
@@ -506,8 +506,8 @@ export const vocabularyQuestions: Question[] = [
     difficulty: 'C1',
     topic: 'collocations',
     question: 'Which word collocates with "severe" to describe very bad weather?',
-    options: ['Severe tea', 'Severe music', 'Severe weather', 'Severe color'],
-    correctIndex: 2,
+    options: ['Severe pain', 'Severe weather', 'Severe taste', 'Severe sound'],
+    correctIndex: 1,
     explanation: "'Severe weather' is the standard collocation for dangerous or extreme weather conditions."
   },
   {
@@ -526,8 +526,8 @@ export const vocabularyQuestions: Question[] = [
     difficulty: 'C1',
     topic: 'collocations',
     question: 'Which phrase correctly describes making a formal complaint?',
-    options: ['Cook a complaint', 'Build a complaint', 'Sing a complaint', 'File a complaint'],
-    correctIndex: 3,
+    options: ['Submit a complaint', 'File a complaint', 'Send a complaint', 'Write a complaint'],
+    correctIndex: 1,
     explanation: "'File a complaint' is the standard collocation for making an official or formal complaint."
   }
 ];

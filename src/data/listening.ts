@@ -240,7 +240,7 @@ export const listeningQuestions: Question[] = [
     clipId: 'clip-a2-2',
     subtype: 'detail',
     question: 'What should employees bring to the meeting?',
-    options: ['Project updates', 'Their laptops', 'Meeting notes', 'Lunch'],
+    options: ['Project updates', 'Their laptops', 'Meeting notes', 'A presentation'],
     correctIndex: 0,
     explanation: 'The speaker says: "Please make sure to bring your project updates."'
   },

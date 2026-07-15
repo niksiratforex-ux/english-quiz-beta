@@ -132,7 +132,7 @@ export const readingQuestions: Question[] = [
     question: 'Why does Maria like the shop?',
     options: ['It is near her house', 'It is very big', 'It sells clothes', 'It has a playground'],
     correctIndex: 0,
-    explanation: 'The passage says she likes it because "it is not expensive," but it is also described as being near her house.'
+    explanation: 'The passage states: "Maria likes this shop because it is not expensive" and also mentions it is near her house. The proximity makes it convenient.'
   },
   {
     id: 'read-006',
@@ -249,10 +249,10 @@ export const readingQuestions: Question[] = [
     topic: 'technology',
     passageId: 'passage-b1-1',
     subtype: 'detail',
-    question: 'According to the passage, coding helps you think logically and solve problems. What else does it help with?',
-    options: ['Logical thinking and problem solving', 'Physical exercise', 'Cooking skills', 'Foreign languages'],
-    correctIndex: 0,
-    explanation: 'The passage states: "Coding helps you think logically and solve problems step by step."'
+    question: 'According to the passage, coding helps you think logically and solve problems step by step. In what other area is coding useful?',
+    options: ['Only in technology companies', 'In many jobs today', 'Only in schools', 'Only in scientific research'],
+    correctIndex: 1,
+    explanation: 'The passage states: "It is also a useful skill in many jobs today, not just in technology companies."'
   },
   {
     id: 'read-016',

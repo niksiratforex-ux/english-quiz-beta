@@ -139,10 +139,17 @@ export function getQuestions(quizType: QuizType, count: number = 15): Question[]
         validListening.filter(q => q.clipId === c.id)
       );
       break;
+    case 'adaptive':
+      questions = [...validVocabulary, ...validGrammar, ...validReading, ...validListening];
+      break;
   }
 
   const shuffled = (quizType === 'reading' || quizType === 'listening') ? questions : shuffleArray(questions);
   return shuffled.slice(0, Math.min(count, shuffled.length));
+}
+
+export function getAllQuestions(): Question[] {
+  return [...validVocabulary, ...validGrammar, ...validReading, ...validListening];
 }
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -162,12 +169,13 @@ export function getListeningClips(): ListeningClip[] {
   return [...listeningClips];
 }
 
-export function getQuestionCount(): { vocabulary: number; grammar: number; mixed: number; reading: number; listening: number } {
+export function getQuestionCount(): { vocabulary: number; grammar: number; mixed: number; reading: number; listening: number; adaptive: number } {
   return {
     vocabulary: validVocabulary.length,
     grammar: validGrammar.length,
     mixed: validVocabulary.length + validGrammar.length,
     reading: validReading.length,
-    listening: validListening.length
+    listening: validListening.length,
+    adaptive: validVocabulary.length + validGrammar.length + validReading.length + validListening.length
   };
 }

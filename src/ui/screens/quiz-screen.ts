@@ -28,6 +28,14 @@ export interface ListeningContext {
   hasPlayed: boolean;
 }
 
+export interface AdaptiveProgress {
+  currentSkill: string;
+  skillIndex: number;
+  totalSkills: number;
+  questionInSkill: number;
+  questionsInSkill: number;
+}
+
 let progressBar: HTMLElement | null = null;
 let optionsContainer: HTMLElement | null = null;
 let hasAnswered: boolean = false;
@@ -40,7 +48,8 @@ export function renderQuizScreen(
   total: number,
   callbacks: QuizScreenCallbacks,
   readingContext?: ReadingContext,
-  listeningContext?: ListeningContext
+  listeningContext?: ListeningContext,
+  adaptiveProgress?: AdaptiveProgress
 ): void {
   clearElement(container);
   hasAnswered = false;
@@ -54,7 +63,14 @@ export function renderQuizScreen(
   const screen = createElement('div', 'screen quiz-screen');
 
   progressBar = createProgressBar();
-  if (readingContext) {
+
+  if (adaptiveProgress) {
+    const adaptiveLabel = createElement('p', 'adaptive-progress-label',
+      adaptiveProgress.currentSkill + ' \u2014 Question ' + adaptiveProgress.questionInSkill + ' of ' + adaptiveProgress.questionsInSkill + ' \u00B7 Skill ' + adaptiveProgress.skillIndex + ' of ' + adaptiveProgress.totalSkills
+    );
+    screen.appendChild(adaptiveLabel);
+    updateProgressBar(progressBar, current, total);
+  } else if (readingContext) {
     const passageLabel = createElement('p', 'reading-progress-label',
       'Passage ' + (readingContext.passageIndex + 1) + ' of ' + readingContext.passageTotal + ' \u00B7 Question ' + readingContext.questionInPassage + ' of ' + readingContext.questionsPerPassage
     );
@@ -78,7 +94,6 @@ export function renderQuizScreen(
   if (listeningContext) {
     listeningPlayer = createListeningPlayer(listeningContext.playerCallbacks);
     screen.appendChild(listeningPlayer.element);
-    // Update player UI to reflect current play count
     if (listeningContext.hasPlayed) {
       listeningPlayer.updatePlayCount(1, 2);
     }
