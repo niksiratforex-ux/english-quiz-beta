@@ -1,106 +1,205 @@
-Fix ONLY the Listening answer-option interaction bug in the current English Quiz MVP.
+Implement a Results & Skill Report upgrade for the existing English Quiz MVP.
 
-This is a real runtime bug. Do not claim success based only on TypeScript build passing.
+Do NOT add a backend, login, database, payments, analytics SDKs, or external dependencies.
+Do NOT rewrite the existing architecture.
+Do NOT regress Vocabulary, Grammar, Mixed, Reading, Listening, feedback form, or static Cloudflare deployment.
+Keep the app free, browser-only, and fast.
 
-CURRENT BUG
-In Listening mode:
-1. The quiz starts correctly with answer options disabled.
-2. I press Play and the browser voice plays.
-3. The options may look enabled or may remain visually disabled, but I cannot select/click any answer.
-4. Therefore the Listening quiz cannot progress.
+The product should feel more like a serious language assessment report.
+It must remain honest: results are estimated and are not an official CEFR certificate.
 
-The expected behavior is:
-- Before the first successful audio play: answer options must be disabled.
-- After the first successful audio play: answer options must become enabled and clickable immediately.
-- One click must register exactly one answer, show feedback, stop active speech, and auto-advance after about 800ms.
-- Questions 2 and 3 under the same clip must remain answerable without requiring another play.
-- A new clip must again require at least one successful Play before its first answer can be selected.
+==================================================
+PRODUCT GOAL
+==================================================
 
-IMPORTANT SCOPE
-- Fix only Listening interaction/state/event handling.
-- Do NOT rewrite the app architecture.
-- Do NOT modify Vocabulary, Grammar, Mixed, Reading, scoring, feedback form, question data, or deployment configuration unless a tiny shared helper is strictly required.
-- Do NOT add dependencies.
-- Do NOT add browser dialogs.
-- Keep the project static and browser-only.
+Upgrade the result screen so it shows:
+- an overall estimated level when appropriate
+- a skill-by-skill breakdown
+- a short interpretation of strengths and weak areas
+- a clear indication of which skills were tested and which were not
+- a practical next-step recommendation
 
-DEBUG THE ACTUAL RUNTIME PATH
-Inspect at minimum:
-- src/app/app.ts
-- src/ui/screens/quiz-screen.ts
-- src/ui/components/listening-player.ts
-- src/services/speech-service.ts
-- option-button component or answer-button rendering code
-- quiz engine answer flow
+Use the spirit of CEFR self-assessment / skill reporting:
+- separate receptive and knowledge skills where applicable
+- show approximate results, not official certification
+- support writing-style honest labels like:
+  "Estimated Level"
+  "Estimated Reading Level"
+  "Estimated Listening Level"
+  "Skill breakdown"
+  "Strengths"
+  "Needs practice"
 
-Find the exact root cause in the browser runtime.
-Check all of the following:
+Reference behavior inspiration only:
+- CEFR self-assessment grids
+- British Council / EnglishScore style skill reporting
+- clear per-skill score presentation
+Do not copy any proprietary wording.
 
-1. Disabled state
-- Determine whether buttons still have `disabled = true` after the first playback starts or ends.
-- Check whether the options container has `pointer-events: none`, `aria-disabled`, overlay, inert state, or a CSS class blocking clicks.
-- Ensure a state transition triggers a real rerender/update of the current option buttons.
-- Do not only mutate an old DOM node that gets replaced by a rerender.
+==================================================
+1. RESULT MODEL
+==================================================
 
-2. Event binding
-- Confirm the click handler is attached to the currently rendered option buttons.
-- Confirm the Listening-specific rerender does not remove or replace buttons after listeners are attached.
-- If direct listeners are fragile because the screen rerenders, use stable event delegation on the current options container with proper cleanup.
-- Do not attach duplicate handlers across questions/clips.
+Extend result data safely so the UI knows:
+- quiz type taken
+- total questions answered
+- correct count
+- percentage
+- estimated CEFR level
+- per-skill breakdowns for:
+  - Vocabulary
+  - Grammar
+  - Reading
+  - Listening
+- whether a skill was actually tested in this session
+- any passage/clip context required for review views
 
-3. Listening state model
-Use an explicit per-clip/session state, for example:
-- hasPlayedCurrentClip: boolean
-- playCount: number
-- isSpeaking: boolean
-- isAnswered: boolean
-- selectedAnswerId: string | null
-- currentClipId: string | null
+If a skill was not tested in the current session, do not display fake numbers for it.
+
+Suggested data shape:
+- overallResult
+- skillResults
+- testedSkills
+- untestedSkills
+- confidence / sample-size note if needed
+
+==================================================
+2. RESULT SCREEN CONTENT
+==================================================
+
+The result screen should include these sections:
+
+A. Main result card
+- Large overall estimated level label
+- Short 1–2 sentence explanation
+- Score summary such as correct / total and percentage
+- Keep the existing disclaimer that this is not an official CEFR exam
+
+B. Skill breakdown
+- Show a compact table or card grid of tested skills only
+- Each tested skill should show:
+  - skill name
+  - correct / total
+  - percentage
+  - a short qualitative note:
+    - Strong
+    - Solid
+    - Needs practice
+- Use honest labeling:
+  - Vocabulary-only sessions should not imply Reading/Listening were tested
+  - Reading-only sessions should say "Estimated Reading Level"
+  - Listening-only sessions should say "Estimated Listening Level"
+  - Mixed sessions should show the skills actually included in the mixed session
+
+C. Strengths and needs practice
+- Based on the session data, display:
+  - one or two strengths
+  - one or two areas to improve
+- Keep this concise and honest
+- Do not invent diagnosis beyond the quiz scope
+
+D. Recommended next step
+- Show a simple suggestion such as:
+  - "Next: practice grammar at the same level"
+  - "Next: try Reading to confirm your placement"
+  - "Next: review A2 vocabulary and grammar"
+- Make this dependent on quiz type and score band
+
+E. Review
+- Keep the detailed review list
+- Ensure it remains readable and compact
+
+F. Feedback form
+- Keep the existing feedback link below the primary action if present
+- Do not let it visually dominate the result screen
+
+==================================================
+3. SCORING AND INTERPRETATION
+==================================================
+
+Implement a small interpretation layer:
+- 0–39%: Needs a lot of practice
+- 40–59%: Developing
+- 60–79%: Solid
+- 80–100%: Strong
+
+Use these bands only as a lightweight qualitative guide, not as official language certification.
+
+Map the bands to short supportive copy such as:
+- Needs a lot of practice
+- Developing foundation
+- Solid control
+- Strong performance
 
 Rules:
-- Set `hasPlayedCurrentClip = true` only after `speechSynthesis.speak()` was successfully initiated.
-- The active option buttons must use:
-  `disabled = !hasPlayedCurrentClip || isAnswered`
-- When moving between questions within the same clip, preserve `hasPlayedCurrentClip`.
-- When moving to a different clip, reset `hasPlayedCurrentClip = false` and `playCount = 0`.
-- Do not reset `hasPlayedCurrentClip` due to speech ending, question rerender, feedback, or unrelated UI updates.
-- Stop speech only after answer selection, navigation, restart, or exit—not in a way that resets answer availability.
+- Do not claim official CEFR placement accuracy
+- Do not overstate small sample sizes
+- If the session is short, show a note like:
+  "This result is based on a short practice set, so treat it as a directional estimate."
+- If only one skill was tested, label the result as that skill-specific estimate rather than a broad overall level.
 
-4. Playback callback
-- Verify the player callback communicates the successful play state to app/session state.
-- Do not rely only on a component-local variable that is lost on rerender.
-- Ensure the callback updates state before the options are rerendered.
-- A successful replay must not disable already enabled options.
+==================================================
+4. UI DESIGN
+==================================================
 
-5. CSS/UI
-- Confirm button disabled styling is not visually misleading.
-- Confirm enabled listening answer buttons have `cursor: pointer`.
-- Confirm no invisible player element overlaps the options.
-- Confirm keyboard Tab/Enter can activate enabled options.
+Create a polished but restrained result layout:
+- keep the main result above the fold on mobile
+- use compact cards / rows for skill breakdown
+- use semantic HTML
+- maintain clear hierarchy
+- maintain 44px touch targets
+- no decorative clutter
+- no icon-only buttons unless accessible labels exist
+- works at 375px and desktop
+- use current style system and spacing tokens
+- keep dark-mode readiness if already present
+- respect prefers-reduced-motion
 
-REQUIRED RUNTIME VERIFICATION
-Run npm run dev or npm run preview and test in a real browser.
+Result screen should never feel like a certificate or official exam report.
+It should feel like a helpful practice summary.
 
-Perform and explicitly report these scenarios:
-1. Start Listening → options disabled before Play.
-2. Click Play once → options visibly enabled and selectable.
-3. Click one answer → exactly one answer registered, feedback shown, auto-advance works.
-4. On question 2 of the same clip → options are already enabled and selectable without replay.
-5. On question 3 of the same clip → same behavior.
-6. Move to next clip → options disabled until Play.
-7. Play new clip → options become selectable.
-8. Use keyboard Tab + Enter/Space to select an enabled option.
-9. Rapid click after enablement cannot register two answers.
-10. Restart during playback cleans up speech and returns to a clean state.
-11. Vocabulary, Grammar, Mixed, and Reading still work unchanged.
-12. npm run build passes.
+==================================================
+5. TESTED VS UNTESTED SKILLS
+==================================================
 
-DELIVERABLE
+Important:
+- If Vocabulary only was tested, show only Vocabulary in the skill breakdown.
+- If Grammar only was tested, show only Grammar.
+- If Reading only was tested, show only Reading and label it clearly.
+- If Listening only was tested, show only Listening and label it clearly.
+- If Mixed is Vocabulary + Grammar, show both.
+- Do not show Reading or Listening in Mixed unless they were actually tested.
+- Untested skills may be mentioned in a small note like:
+  "Reading and Listening were not part of this session."
+
+==================================================
+6. VALIDATION AND QA
+==================================================
+
+Update types and validation if needed.
+
+Manual QA:
+- Run npm run build.
+- Test Vocabulary-only result screen.
+- Test Grammar-only result screen.
+- Test Mixed result screen.
+- Test Reading-only result screen.
+- Test Listening-only result screen.
+- Verify all labels change correctly.
+- Verify no fake untested skill scores appear.
+- Verify disclaimer remains visible.
+- Verify feedback form still works.
+- Verify mobile layout and desktop layout.
+- Verify review section still shows the correct contextual content.
+
+==================================================
+7. DELIVERABLE
+==================================================
+
 Return:
-- exact root cause
-- files changed
-- concise explanation of the state/event fix
-- runtime verification results for all 12 scenarios
-- npm run build output/result
-
-Do not say “all verified” unless you actually performed browser runtime testing of the Listening flow.
+1. Files changed and why
+2. Summary of the result-report model
+3. Rules for tested vs untested skills
+4. Manual QA completed
+5. npm run build result
+6. Known limitations

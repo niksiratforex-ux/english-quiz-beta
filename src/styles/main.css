@@ -319,87 +319,284 @@ body {
 
 /* Result Screen */
 .result-screen {
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   text-align: center;
+  padding-top: var(--spacing-lg);
 }
 
-.result-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.score-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-md);
-}
-
-.score-value {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-sm);
-}
-
-.score-number {
-  font-size: 4rem;
-  font-weight: 700;
-  color: var(--primary-color);
-}
-
-.score-separator {
-  font-size: 2rem;
-  color: var(--text-secondary);
-}
-
-.score-total {
-  font-size: 2rem;
-  color: var(--text-secondary);
-}
-
-.score-percentage {
-  font-size: 1.25rem;
-  color: var(--text-secondary);
-}
-
-/* Level Card */
-.level-card {
+/* Main Result Card */
+.result-card-main {
   background-color: var(--surface-color);
   border-radius: var(--border-radius);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
   box-shadow: var(--shadow-sm);
   width: 100%;
   max-width: 400px;
 }
 
-.level-label {
-  font-size: 0.875rem;
+.result-level-label {
+  font-size: 0.8rem;
   color: var(--text-secondary);
   text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin-bottom: var(--spacing-sm);
 }
 
-.level-value {
-  font-size: 1.5rem;
+.result-level-value {
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--primary-color);
   margin-bottom: var(--spacing-sm);
 }
 
-.level-description {
-  font-size: 1rem;
+.result-level-desc {
+  font-size: 0.95rem;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.5;
+  margin-bottom: var(--spacing-lg);
 }
 
-.level-disclaimer {
+.result-score-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+}
+
+.result-score-big {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.result-score-sep {
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.result-score-total {
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.result-score-pct {
+  font-size: 1.125rem;
+  color: var(--text-secondary);
+  margin-left: var(--spacing-sm);
+}
+
+.result-disclaimer {
   font-size: 0.8rem;
   color: var(--text-secondary);
   font-style: italic;
-  margin-top: var(--spacing-sm);
+  opacity: 0.8;
+}
+
+/* Result Sections */
+.result-section {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: var(--spacing-xl);
+  text-align: left;
+}
+
+.result-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  text-align: center;
+}
+
+/* Skill Grid */
+.skill-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.skill-card {
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--primary-color);
+}
+
+.skill-card-strong {
+  border-left-color: var(--success-color);
+}
+
+.skill-card-solid {
+  border-left-color: #3b82f6;
+}
+
+.skill-card-developing {
+  border-left-color: var(--warning-color);
+}
+
+.skill-card-needs-practice {
+  border-left-color: var(--error-color);
+}
+
+.skill-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.skill-card-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.skill-card-band {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.skill-band-strong {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.skill-band-solid {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.skill-band-developing {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.skill-band-needs-practice {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.skill-card-score {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.skill-card-score strong {
+  color: var(--text-primary);
+}
+
+.skill-card-bar {
+  height: 6px;
+  background-color: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.skill-card-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.skill-bar-strong {
+  background-color: var(--success-color);
+}
+
+.skill-bar-solid {
+  background-color: #3b82f6;
+}
+
+.skill-bar-developing {
+  background-color: var(--warning-color);
+}
+
+.skill-bar-needs-practice {
+  background-color: var(--error-color);
+}
+
+.result-untested-note {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: var(--spacing-md);
+  text-align: center;
+}
+
+/* Strengths Grid */
+.strengths-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.strengths-col,
+.needs-col {
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.strengths-heading {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.strengths-heading-good {
+  color: var(--success-color);
+}
+
+.strengths-heading-need {
+  color: var(--warning-color);
+}
+
+.strengths-item,
+.needs-item {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+  line-height: 1.4;
+}
+
+.strengths-empty,
+.needs-empty {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* Next Step */
+.next-step-card {
+  background-color: #f0f9ff;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  border-left: 4px solid var(--primary-color);
+}
+
+.next-step-text {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* Sample Note */
+.result-sample-note {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  text-align: center;
+  max-width: 400px;
+  margin-bottom: var(--spacing-xl);
   opacity: 0.8;
 }
 
@@ -410,6 +607,7 @@ body {
   gap: var(--spacing-md);
   width: 100%;
   max-width: 300px;
+  margin-bottom: var(--spacing-xl);
 }
 
 .review-button,
@@ -444,37 +642,23 @@ body {
   background-color: var(--primary-hover);
 }
 
-/* Skill Breakdown */
-.skill-breakdown {
-  width: 100%;
-  max-width: 300px;
-  margin-bottom: var(--spacing-xl);
-}
+/* Mobile Strengths Grid */
+@media (max-width: 480px) {
+  .strengths-grid {
+    grid-template-columns: 1fr;
+  }
 
-.skill-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-sm) 0;
-  border-bottom: 1px solid #e5e7eb;
-}
+  .result-card-main {
+    padding: var(--spacing-lg);
+  }
 
-.skill-label {
-  font-size: 0.95rem;
-  color: var(--text-primary);
-}
+  .result-level-value {
+    font-size: 1.5rem;
+  }
 
-.skill-score {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-.skill-note {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  font-style: italic;
-  margin-top: var(--spacing-sm);
+  .result-score-big {
+    font-size: 2.5rem;
+  }
 }
 
 /* Feedback Section */

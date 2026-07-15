@@ -1,13 +1,12 @@
 ﻿import { createElement, clearElement } from '../renderer';
-import { QuizResult, Question, Answer } from '../../core/types';
+import { QuizResult, Question, Answer, SkillResult } from '../../core/types';
 import { getReadingPassages, getListeningClips } from '../../data';
 
 const FEEDBACK_FORM_PLACEHOLDER = "REPLACE_WITH_YOUR_GOOGLE_FORM_LINK";
-
 const FEEDBACK_FORM_URL: string =
   "https://docs.google.com/forms/d/e/1FAIpQLSdJ_Ja0cMQL7pt1U6HMXLqvhzPKHwUL2iWLJeqN2nFEYL2-3g/viewform";
-
 const hasFeedbackForm = FEEDBACK_FORM_URL !== FEEDBACK_FORM_PLACEHOLDER;
+
 export interface ResultScreenCallbacks {
   onRestart: () => void;
   onReview: () => void;
@@ -22,56 +21,33 @@ export function renderResultScreen(
 
   const screen = createElement('div', 'screen result-screen');
 
-  const header = createElement('div', 'result-header');
-  const scoreTitle = createElement('h2', 'score-title', 'Quiz Complete!');
-  const scoreValue = createElement('div', 'score-value');
-  scoreValue.innerHTML = `
-    <span class="score-number">${result.score}</span>
-    <span class="score-separator">/</span>
-    <span class="score-total">${result.totalQuestions}</span>
-  `;
-  const percentage = createElement('p', 'score-percentage', `${result.percentage}%`);
-  header.appendChild(scoreTitle);
-  header.appendChild(scoreValue);
-  header.appendChild(percentage);
+  // A. Main result card
+  screen.appendChild(createMainResultCard(result));
 
-  const levelCard = createElement('div', 'level-card');
-  const isReading = result.quizType === 'reading';
-  const isListening = result.quizType === 'listening';
-  let levelLabelText = 'Your Level';
-  if (isReading) levelLabelText = 'Estimated Reading Level';
-  else if (isListening) levelLabelText = 'Estimated Listening Level';
-  const levelLabel = createElement('p', 'level-label', levelLabelText);
-  const levelValue = createElement('h3', 'level-value', `${result.level} (${result.levelCode})`);
-  const levelDescription = createElement('p', 'level-description', getLevelDescription(result.level));
-  let disclaimerText = 'Estimated level based on this short practice quiz';
-  if (isReading) disclaimerText = 'Estimated reading level based on this short practice quiz';
-  else if (isListening) disclaimerText = 'Estimated listening level based on this short practice quiz';
-  const disclaimer = createElement('p', 'level-disclaimer', disclaimerText);
-  levelCard.appendChild(levelLabel);
-  levelCard.appendChild(levelValue);
-  levelCard.appendChild(levelDescription);
-  levelCard.appendChild(disclaimer);
+  // B. Skill breakdown
+  screen.appendChild(createSkillBreakdown(result));
 
-  const skillBreakdown = createSkillBreakdown(result);
+  // C. Strengths and needs practice
+  screen.appendChild(createStrengthsSection(result));
 
+  // D. Recommended next step
+  screen.appendChild(createNextStepSection(result));
+
+  // Sample size note
+  screen.appendChild(createSampleNote());
+
+  // Actions
   const actions = createElement('div', 'result-actions');
-
   const restartButton = createElement('button', 'restart-button', 'Try Again');
   restartButton.addEventListener('click', callbacks.onRestart);
-
   const reviewButton = createElement('button', 'review-button', 'Review Answers');
   reviewButton.addEventListener('click', callbacks.onReview);
-
   actions.appendChild(restartButton);
   actions.appendChild(reviewButton);
-
-  screen.appendChild(header);
-  screen.appendChild(levelCard);
-  screen.appendChild(skillBreakdown);
   screen.appendChild(actions);
 
-  if (hasFeedbackForm)  {
+  // F. Feedback form
+  if (hasFeedbackForm) {
     const feedbackSection = createElement('div', 'feedback-section');
     const feedbackText = createElement('p', 'feedback-text',
       'Found an unclear question or a bug? Your feedback helps improve the quiz.'
@@ -88,63 +64,178 @@ export function renderResultScreen(
   container.appendChild(screen);
 }
 
-function createSkillBreakdown(result: QuizResult): HTMLElement {
-  const container = createElement('div', 'skill-breakdown');
+function createMainResultCard(result: QuizResult): HTMLElement {
+  const card = createElement('div', 'result-card-main');
 
-  const vocabQuestions = result.questions.filter(q => q.type === 'vocabulary');
-  const grammarQuestions = result.questions.filter(q => q.type === 'grammar');
-  const readingQuestions = result.questions.filter(q => q.type === 'reading');
-  const listeningQuestions = result.questions.filter(q => q.type === 'listening');
+  const isReading = result.quizType === 'reading';
+  const isListening = result.quizType === 'listening';
+  const isSingleSkill = isReading || isListening || result.quizType === 'vocabulary' || result.quizType === 'grammar';
 
-  const vocabAnswers = result.answers.filter(a => {
-    const q = result.questions.find(q => q.id === a.questionId);
-    return q && q.type === 'vocabulary';
-  });
-  const grammarAnswers = result.answers.filter(a => {
-    const q = result.questions.find(q => q.id === a.questionId);
-    return q && q.type === 'grammar';
-  });
-  const readingAnswers = result.answers.filter(a => {
-    const q = result.questions.find(q => q.id === a.questionId);
-    return q && q.type === 'reading';
-  });
-  const listeningAnswers = result.answers.filter(a => {
-    const q = result.questions.find(q => q.id === a.questionId);
-    return q && q.type === 'listening';
-  });
+  let levelLabelText = 'Estimated Level';
+  if (isReading) levelLabelText = 'Estimated Reading Level';
+  else if (isListening) levelLabelText = 'Estimated Listening Level';
+  else if (result.quizType === 'vocabulary') levelLabelText = 'Estimated Vocabulary Level';
+  else if (result.quizType === 'grammar') levelLabelText = 'Estimated Grammar Level';
 
-  const vocabCorrect = vocabAnswers.filter(a => a.isCorrect).length;
-  const grammarCorrect = grammarAnswers.filter(a => a.isCorrect).length;
-  const readingCorrect = readingAnswers.filter(a => a.isCorrect).length;
-  const listeningCorrect = listeningAnswers.filter(a => a.isCorrect).length;
+  const levelLabel = createElement('p', 'result-level-label', levelLabelText);
+  const levelValue = createElement('h2', 'result-level-value', result.level + ' (' + result.levelCode + ')');
+  const levelDescription = createElement('p', 'result-level-desc', getLevelDescription(result.level));
 
-  if (result.quizType === 'vocabulary') {
-    container.appendChild(createSkillRow('Vocabulary', vocabCorrect, vocabQuestions.length));
-    container.appendChild(createElement('p', 'skill-note', 'Based on vocabulary questions only'));
-  } else if (result.quizType === 'grammar') {
-    container.appendChild(createSkillRow('Grammar', grammarCorrect, grammarQuestions.length));
-    container.appendChild(createElement('p', 'skill-note', 'Based on grammar questions only'));
-  } else if (result.quizType === 'reading') {
-    container.appendChild(createSkillRow('Reading', readingCorrect, readingQuestions.length));
-    container.appendChild(createElement('p', 'skill-note', 'Based on reading comprehension questions'));
-  } else if (result.quizType === 'listening') {
-    container.appendChild(createSkillRow('Listening', listeningCorrect, listeningQuestions.length));
-    container.appendChild(createElement('p', 'skill-note', 'Based on listening comprehension questions'));
-  } else {
-    container.appendChild(createSkillRow('Vocabulary', vocabCorrect, vocabQuestions.length));
-    container.appendChild(createSkillRow('Grammar', grammarCorrect, grammarQuestions.length));
+  const scoreRow = createElement('div', 'result-score-row');
+  const scoreBig = createElement('span', 'result-score-big', String(result.score));
+  const scoreSep = createElement('span', 'result-score-sep', ' / ');
+  const scoreTotal = createElement('span', 'result-score-total', String(result.totalQuestions));
+  const scorePct = createElement('span', 'result-score-pct', result.percentage + '%');
+  scoreRow.appendChild(scoreBig);
+  scoreRow.appendChild(scoreSep);
+  scoreRow.appendChild(scoreTotal);
+  scoreRow.appendChild(scorePct);
+
+  let disclaimerText = 'This is a short practice quiz for an estimated English level. It is not an official CEFR exam.';
+  if (isSingleSkill) {
+    disclaimerText = 'This result is based on a short practice set, so treat it as a directional estimate.';
   }
+  const disclaimer = createElement('p', 'result-disclaimer', disclaimerText);
 
-  return container;
+  card.appendChild(levelLabel);
+  card.appendChild(levelValue);
+  card.appendChild(levelDescription);
+  card.appendChild(scoreRow);
+  card.appendChild(disclaimer);
+  return card;
 }
 
-function createSkillRow(label: string, correct: number, total: number): HTMLElement {
-  const row = createElement('div', 'skill-row');
-  const labelEl = createElement('span', 'skill-label', label);
-  const scoreEl = createElement('span', 'skill-score', `${correct} / ${total}`);
-  row.appendChild(labelEl);
-  row.appendChild(scoreEl);
-  return row;
+function createSkillBreakdown(result: QuizResult): HTMLElement {
+  const section = createElement('div', 'result-section');
+  const title = createElement('h3', 'result-section-title', 'Skill Breakdown');
+  section.appendChild(title);
+
+  if (result.skillResults.length === 0) {
+    section.appendChild(createElement('p', 'result-empty-note', 'No skills to display.'));
+    return section;
+  }
+
+  const grid = createElement('div', 'skill-grid');
+  result.skillResults.forEach(skill => {
+    grid.appendChild(createSkillCard(skill));
+  });
+  section.appendChild(grid);
+
+  if (result.untestedSkills.length > 0) {
+    const untestedNote = createElement('p', 'result-untested-note',
+      result.untestedSkills.join(' and ') + (result.untestedSkills.length === 1 ? ' was' : ' were') + ' not part of this session.'
+    );
+    section.appendChild(untestedNote);
+  }
+
+  return section;
+}
+
+function createSkillCard(skill: SkillResult): HTMLElement {
+  const card = createElement('div', 'skill-card skill-card-' + skill.band);
+
+  const header = createElement('div', 'skill-card-header');
+  const name = createElement('span', 'skill-card-name', skill.skill);
+  const band = createElement('span', 'skill-card-band skill-band-' + skill.band, skill.bandLabel);
+  header.appendChild(name);
+  header.appendChild(band);
+
+  const score = createElement('div', 'skill-card-score');
+  score.innerHTML = '<strong>' + skill.correct + '</strong> / ' + skill.total + '  (' + skill.percentage + '%)';
+
+  const bar = createElement('div', 'skill-card-bar');
+  const fill = createElement('div', 'skill-card-bar-fill skill-bar-' + skill.band);
+  fill.style.width = skill.percentage + '%';
+  bar.appendChild(fill);
+
+  card.appendChild(header);
+  card.appendChild(score);
+  card.appendChild(bar);
+  return card;
+}
+
+function createStrengthsSection(result: QuizResult): HTMLElement {
+  const section = createElement('div', 'result-section');
+  const title = createElement('h3', 'result-section-title', 'Strengths and Needs Practice');
+  section.appendChild(title);
+
+  const strengths = result.skillResults.filter(s => s.band === 'strong' || s.band === 'solid');
+  const needs = result.skillResults.filter(s => s.band === 'needs-practice' || s.band === 'developing');
+
+  const grid = createElement('div', 'strengths-grid');
+
+  const strengthsCol = createElement('div', 'strengths-col');
+  const strengthsHead = createElement('h4', 'strengths-heading strengths-heading-good', 'Strengths');
+  strengthsCol.appendChild(strengthsHead);
+  if (strengths.length > 0) {
+    strengths.forEach(s => {
+      strengthsCol.appendChild(createElement('p', 'strengths-item', s.skill + ': ' + s.bandLabel + ' (' + s.percentage + '%)'));
+    });
+  } else {
+    strengthsCol.appendChild(createElement('p', 'strengths-item strengths-empty', 'Keep practicing to build your strengths.'));
+  }
+
+  const needsCol = createElement('div', 'needs-col');
+  const needsHead = createElement('h4', 'strengths-heading strengths-heading-need', 'Needs Practice');
+  needsCol.appendChild(needsHead);
+  if (needs.length > 0) {
+    needs.forEach(s => {
+      needsCol.appendChild(createElement('p', 'needs-item', s.skill + ': ' + s.bandLabel + ' (' + s.percentage + '%)'));
+    });
+  } else {
+    needsCol.appendChild(createElement('p', 'needs-item needs-empty', 'Great work! No areas need immediate attention.'));
+  }
+
+  grid.appendChild(strengthsCol);
+  grid.appendChild(needsCol);
+  section.appendChild(grid);
+  return section;
+}
+
+function createNextStepSection(result: QuizResult): HTMLElement {
+  const section = createElement('div', 'result-section');
+  const title = createElement('h3', 'result-section-title', 'Recommended Next Step');
+  section.appendChild(title);
+
+  const suggestion = getPersonalizedSuggestion(result);
+  const card = createElement('div', 'next-step-card');
+  const text = createElement('p', 'next-step-text', suggestion);
+  card.appendChild(text);
+  section.appendChild(card);
+  return section;
+}
+
+function createSampleNote(): HTMLElement {
+  return createElement('p', 'result-sample-note',
+    'This result is based on a short practice set, so treat it as a directional estimate.'
+  );
+}
+
+function getPersonalizedSuggestion(result: QuizResult): string {
+  const weakest = result.skillResults.reduce((min, s) => s.percentage < min.percentage ? s : min, result.skillResults[0]);
+
+  if (result.percentage >= 80) {
+    if (result.untestedSkills.length > 0) {
+      return 'Next: try ' + result.untestedSkills[0].toLowerCase() + ' to confirm your placement across more skills.';
+    }
+    return 'Next: challenge yourself with questions at the next CEFR level.';
+  }
+
+  if (result.percentage >= 60) {
+    if (weakest) {
+      return 'Next: practice ' + weakest.skill.toLowerCase() + ' to strengthen your weakest area.';
+    }
+    return 'Next: review ' + result.levelCode + ' material to solidify your foundation.';
+  }
+
+  if (result.percentage >= 40) {
+    if (weakest) {
+      return 'Next: focus on ' + weakest.skill.toLowerCase() + ' at the ' + result.levelCode + ' level to build a stronger base.';
+    }
+    return 'Next: review ' + result.levelCode + ' vocabulary and grammar fundamentals.';
+  }
+
+  return 'Next: start with ' + result.levelCode + ' basics to build a solid foundation.';
 }
 
 function getLevelDescription(level: string): string {
@@ -186,71 +277,56 @@ export function renderReviewScreen(
     const answer = answers[index];
     const isCorrect = answer && answer.selectedIndex === question.correctIndex;
 
-    // Show passage header for reading questions when passage changes
     if (question.type === 'reading' && question.passageId && question.passageId !== lastPassageId) {
       lastPassageId = question.passageId;
       const passage = passages.find(p => p.id === question.passageId);
       if (passage) {
         const passageHeader = createElement('div', 'review-passage-header');
-        const passageTitle = createElement('h3', 'review-passage-title', 'Passage: ' + passage.title);
-        const passageText = createElement('p', 'review-passage-text', passage.text);
-        passageHeader.appendChild(passageTitle);
-        passageHeader.appendChild(passageText);
+        passageHeader.appendChild(createElement('h3', 'review-passage-title', 'Passage: ' + passage.title));
+        passageHeader.appendChild(createElement('p', 'review-passage-text', passage.text));
         answersList.appendChild(passageHeader);
       }
     }
 
-    // Show clip header for listening questions when clip changes
     if (question.type === 'listening' && question.clipId && question.clipId !== lastClipId) {
       lastClipId = question.clipId;
       const clip = clips.find(c => c.id === question.clipId);
       if (clip) {
         const clipHeader = createElement('div', 'review-clip-header');
-        const clipTitle = createElement('h3', 'review-clip-title', 'Clip: ' + clip.title);
-        const clipScript = createElement('p', 'review-clip-script', clip.script);
-        clipHeader.appendChild(clipTitle);
-        clipHeader.appendChild(clipScript);
+        clipHeader.appendChild(createElement('h3', 'review-clip-title', 'Clip: ' + clip.title));
+        clipHeader.appendChild(createElement('p', 'review-clip-script', clip.script));
         answersList.appendChild(clipHeader);
       }
     }
 
-    const answerItem = createElement('div', `answer-item ${isCorrect ? 'correct' : 'incorrect'}`);
+    const answerItem = createElement('div', 'answer-item ' + (isCorrect ? 'correct' : 'incorrect'));
 
     const meta = createElement('div', 'review-meta');
-    const typeBadge = createElement('span', `badge badge-${question.type}`, question.type);
-    const topicBadge = createElement('span', 'badge badge-topic', question.topic);
-    meta.appendChild(typeBadge);
-    meta.appendChild(topicBadge);
+    meta.appendChild(createElement('span', 'badge badge-' + question.type, question.type));
+    meta.appendChild(createElement('span', 'badge badge-topic', question.topic));
     if (question.subtype) {
-      const subtypeBadge = createElement('span', 'badge badge-subtype', String(question.subtype));
-      meta.appendChild(subtypeBadge);
+      meta.appendChild(createElement('span', 'badge badge-subtype', String(question.subtype)));
     }
-
-    const questionNumber = createElement('span', 'question-number', `Q${index + 1}`);
-    const questionText = createElement('p', 'question-text', question.question);
-
-    const selectedAnswer = createElement('p', 'selected-answer');
-    const correctAnswer = createElement('p', 'correct-answer');
-
-    if (answer) {
-      selectedAnswer.innerHTML = `Your answer: <strong>${question.options[answer.selectedIndex]}</strong>`;
-      correctAnswer.innerHTML = `Correct answer: <strong>${question.options[question.correctIndex]}</strong>`;
-    }
-
-    const explanation = createElement('p', 'explanation', question.explanation);
 
     answerItem.appendChild(meta);
-    answerItem.appendChild(questionNumber);
-    answerItem.appendChild(questionText);
-    answerItem.appendChild(selectedAnswer);
-    answerItem.appendChild(correctAnswer);
-    answerItem.appendChild(explanation);
+    answerItem.appendChild(createElement('span', 'question-number', 'Q' + (index + 1)));
+    answerItem.appendChild(createElement('p', 'question-text', question.question));
 
+    if (answer) {
+      const selectedAnswer = createElement('p', 'selected-answer');
+      selectedAnswer.innerHTML = 'Your answer: <strong>' + question.options[answer.selectedIndex] + '</strong>';
+      answerItem.appendChild(selectedAnswer);
+
+      const correctAnswer = createElement('p', 'correct-answer');
+      correctAnswer.innerHTML = 'Correct answer: <strong>' + question.options[question.correctIndex] + '</strong>';
+      answerItem.appendChild(correctAnswer);
+    }
+
+    answerItem.appendChild(createElement('p', 'explanation', question.explanation));
     answersList.appendChild(answerItem);
   });
 
   screen.appendChild(header);
   screen.appendChild(answersList);
-
   container.appendChild(screen);
 }

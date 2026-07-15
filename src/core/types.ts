@@ -6,6 +6,7 @@ export type QuizStatus = 'idle' | 'active' | 'completed';
 export type QuestionType = 'vocabulary' | 'grammar' | 'reading' | 'listening';
 export type ReadingSubtype = 'main-idea' | 'detail' | 'inference' | 'vocabulary-in-context';
 export type ListeningSubtype = 'gist' | 'detail' | 'inference' | 'specific-information';
+export type PerformanceBand = 'needs-practice' | 'developing' | 'solid' | 'strong';
 
 export interface ReadingPassage {
   id: string;
@@ -55,6 +56,15 @@ export interface QuizState {
 export type Level = 'Beginner' | 'Elementary' | 'Intermediate' | 'Upper-Intermediate' | 'Advanced';
 export type LevelCode = 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
 
+export interface SkillResult {
+  skill: string;
+  correct: number;
+  total: number;
+  percentage: number;
+  band: PerformanceBand;
+  bandLabel: string;
+}
+
 export interface QuizResult {
   quizType: QuizType;
   score: number;
@@ -64,4 +74,7 @@ export interface QuizResult {
   levelCode: LevelCode;
   answers: Answer[];
   questions: Question[];
+  skillResults: SkillResult[];
+  testedSkills: string[];
+  untestedSkills: string[];
 }
