@@ -1,4 +1,4 @@
-import { createElement, clearElement } from '../renderer';
+﻿import { createElement, clearElement } from '../renderer';
 import { QuizType } from '../../core/types';
 
 export interface StartScreenCallbacks {
@@ -15,7 +15,7 @@ export function renderStartScreen(
 
   const header = createElement('div', 'screen-header');
   const title = createElement('h1', 'title', 'English Quiz');
-  const subtitle = createElement('p', 'subtitle', 'Test your vocabulary and grammar skills');
+  const subtitle = createElement('p', 'subtitle', 'Test your vocabulary, grammar, reading, and listening skills');
   header.appendChild(title);
   header.appendChild(subtitle);
 
@@ -24,7 +24,7 @@ export function renderStartScreen(
     'This is a short practice quiz for an estimated English level. It is not an official CEFR exam.'
   );
   const infoDetails = createElement('p', 'start-info-details',
-    'Vocabulary and Grammar each contain 15 randomly selected questions. Mixed combines both. The quiz takes only a few minutes.'
+    'Vocabulary and Grammar each contain 15 randomly selected questions. Mixed combines both. Reading has 9 questions across 3 passages. Listening has 9 questions across 3 audio clips. The quiz takes only a few minutes.'
   );
   info.appendChild(infoText);
   info.appendChild(infoDetails);
@@ -37,7 +37,9 @@ export function renderStartScreen(
   const types: { type: QuizType; label: string; description: string }[] = [
     { type: 'vocabulary', label: 'Vocabulary', description: '15 questions' },
     { type: 'grammar', label: 'Grammar', description: '15 questions' },
-    { type: 'mixed', label: 'Mixed', description: '15 questions from both' }
+    { type: 'mixed', label: 'Mixed', description: '15 questions from both' },
+    { type: 'reading', label: 'Reading', description: '9 questions across 3 passages' },
+    { type: 'listening', label: 'Listening', description: '9 questions across 3 audio clips' }
   ];
 
   types.forEach(({ type, label, description }) => {
@@ -59,7 +61,7 @@ export function renderStartScreen(
   content.appendChild(quizTypeButtons);
 
   const footer = createElement('div', 'screen-footer');
-  const footerText = createElement('p', 'footer-text', 'Free • No signup required');
+  const footerText = createElement('p', 'footer-text', 'Free \u2022 No signup required');
   footer.appendChild(footerText);
 
   screen.appendChild(header);

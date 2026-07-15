@@ -1,0 +1,106 @@
+Fix ONLY the Listening answer-option interaction bug in the current English Quiz MVP.
+
+This is a real runtime bug. Do not claim success based only on TypeScript build passing.
+
+CURRENT BUG
+In Listening mode:
+1. The quiz starts correctly with answer options disabled.
+2. I press Play and the browser voice plays.
+3. The options may look enabled or may remain visually disabled, but I cannot select/click any answer.
+4. Therefore the Listening quiz cannot progress.
+
+The expected behavior is:
+- Before the first successful audio play: answer options must be disabled.
+- After the first successful audio play: answer options must become enabled and clickable immediately.
+- One click must register exactly one answer, show feedback, stop active speech, and auto-advance after about 800ms.
+- Questions 2 and 3 under the same clip must remain answerable without requiring another play.
+- A new clip must again require at least one successful Play before its first answer can be selected.
+
+IMPORTANT SCOPE
+- Fix only Listening interaction/state/event handling.
+- Do NOT rewrite the app architecture.
+- Do NOT modify Vocabulary, Grammar, Mixed, Reading, scoring, feedback form, question data, or deployment configuration unless a tiny shared helper is strictly required.
+- Do NOT add dependencies.
+- Do NOT add browser dialogs.
+- Keep the project static and browser-only.
+
+DEBUG THE ACTUAL RUNTIME PATH
+Inspect at minimum:
+- src/app/app.ts
+- src/ui/screens/quiz-screen.ts
+- src/ui/components/listening-player.ts
+- src/services/speech-service.ts
+- option-button component or answer-button rendering code
+- quiz engine answer flow
+
+Find the exact root cause in the browser runtime.
+Check all of the following:
+
+1. Disabled state
+- Determine whether buttons still have `disabled = true` after the first playback starts or ends.
+- Check whether the options container has `pointer-events: none`, `aria-disabled`, overlay, inert state, or a CSS class blocking clicks.
+- Ensure a state transition triggers a real rerender/update of the current option buttons.
+- Do not only mutate an old DOM node that gets replaced by a rerender.
+
+2. Event binding
+- Confirm the click handler is attached to the currently rendered option buttons.
+- Confirm the Listening-specific rerender does not remove or replace buttons after listeners are attached.
+- If direct listeners are fragile because the screen rerenders, use stable event delegation on the current options container with proper cleanup.
+- Do not attach duplicate handlers across questions/clips.
+
+3. Listening state model
+Use an explicit per-clip/session state, for example:
+- hasPlayedCurrentClip: boolean
+- playCount: number
+- isSpeaking: boolean
+- isAnswered: boolean
+- selectedAnswerId: string | null
+- currentClipId: string | null
+
+Rules:
+- Set `hasPlayedCurrentClip = true` only after `speechSynthesis.speak()` was successfully initiated.
+- The active option buttons must use:
+  `disabled = !hasPlayedCurrentClip || isAnswered`
+- When moving between questions within the same clip, preserve `hasPlayedCurrentClip`.
+- When moving to a different clip, reset `hasPlayedCurrentClip = false` and `playCount = 0`.
+- Do not reset `hasPlayedCurrentClip` due to speech ending, question rerender, feedback, or unrelated UI updates.
+- Stop speech only after answer selection, navigation, restart, or exit—not in a way that resets answer availability.
+
+4. Playback callback
+- Verify the player callback communicates the successful play state to app/session state.
+- Do not rely only on a component-local variable that is lost on rerender.
+- Ensure the callback updates state before the options are rerendered.
+- A successful replay must not disable already enabled options.
+
+5. CSS/UI
+- Confirm button disabled styling is not visually misleading.
+- Confirm enabled listening answer buttons have `cursor: pointer`.
+- Confirm no invisible player element overlaps the options.
+- Confirm keyboard Tab/Enter can activate enabled options.
+
+REQUIRED RUNTIME VERIFICATION
+Run npm run dev or npm run preview and test in a real browser.
+
+Perform and explicitly report these scenarios:
+1. Start Listening → options disabled before Play.
+2. Click Play once → options visibly enabled and selectable.
+3. Click one answer → exactly one answer registered, feedback shown, auto-advance works.
+4. On question 2 of the same clip → options are already enabled and selectable without replay.
+5. On question 3 of the same clip → same behavior.
+6. Move to next clip → options disabled until Play.
+7. Play new clip → options become selectable.
+8. Use keyboard Tab + Enter/Space to select an enabled option.
+9. Rapid click after enablement cannot register two answers.
+10. Restart during playback cleans up speech and returns to a clean state.
+11. Vocabulary, Grammar, Mixed, and Reading still work unchanged.
+12. npm run build passes.
+
+DELIVERABLE
+Return:
+- exact root cause
+- files changed
+- concise explanation of the state/event fix
+- runtime verification results for all 12 scenarios
+- npm run build output/result
+
+Do not say “all verified” unless you actually performed browser runtime testing of the Listening flow.

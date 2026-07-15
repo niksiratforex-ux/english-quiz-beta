@@ -1,4 +1,4 @@
-/* CSS Variables */
+﻿/* CSS Variables */
 :root {
   --primary-color: #3b82f6;
   --primary-hover: #2563eb;
@@ -686,5 +686,228 @@ body {
   
   .quiz-type-button {
     min-height: 48px;
+  }
+}
+
+/* Reading Passage */
+.reading-passage {
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid #06b6d4;
+}
+
+.passage-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.passage-text {
+  font-size: 1rem;
+  color: var(--text-primary);
+  line-height: 1.8;
+  max-width: 72ch;
+}
+
+/* Reading Progress */
+.reading-progress-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+  text-align: center;
+}
+
+/* Reading Badge */
+.badge-reading {
+  background-color: #cffafe;
+  color: #155e75;
+}
+
+.badge-subtype {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* Review Passage Header */
+.review-passage-header {
+  background-color: #f0fdfa;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  border-left: 4px solid #06b6d4;
+}
+
+.review-passage-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.review-passage-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* Mobile Reading Adjustments */
+@media (max-width: 480px) {
+  .passage-text {
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  .reading-passage {
+    padding: var(--spacing-md);
+  }
+
+  .review-passage-header {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Listening Player */
+.listening-player {
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid #8b5cf6;
+}
+
+.listening-controls {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.listening-btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  min-height: 44px;
+  border: 2px solid #e5e7eb;
+  border-radius: var(--border-radius);
+  background-color: var(--surface-color);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 80px;
+}
+
+.listening-btn:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  background-color: #f8fafc;
+}
+
+.listening-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.listening-btn-play {
+  background-color: #8b5cf6;
+  color: white;
+  border-color: #8b5cf6;
+}
+
+.listening-btn-play:hover:not(:disabled) {
+  background-color: #7c3aed;
+  border-color: #7c3aed;
+}
+
+.listening-btn-replay {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.listening-btn-replay:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.listening-btn-stop {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: var(--error-color);
+}
+
+.listening-btn-stop:hover:not(:disabled) {
+  background-color: #fee2e2;
+  border-color: #f87171;
+}
+
+.listening-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.listening-status {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.listening-note {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  opacity: 0.8;
+}
+
+/* Listening Badge */
+.badge-listening {
+  background-color: #ede9fe;
+  color: #5b21b6;
+}
+
+/* Listening Progress */
+.listening-progress-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+  text-align: center;
+}
+
+/* Review Clip Header */
+.review-clip-header {
+  background-color: #faf5ff;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  border-left: 4px solid #8b5cf6;
+}
+
+.review-clip-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.review-clip-script {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-style: italic;
+}
+
+/* Mobile Listening Adjustments */
+@media (max-width: 480px) {
+  .listening-controls {
+    flex-direction: column;
+  }
+
+  .listening-btn {
+    width: 100%;
+  }
+
+  .review-clip-header {
+    padding: var(--spacing-md);
   }
 }

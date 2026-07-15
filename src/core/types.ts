@@ -1,18 +1,40 @@
-// Domain models for the English Quiz application
+﻿// Domain models for the English Quiz application
 
-export type QuizType = 'vocabulary' | 'grammar' | 'mixed';
+export type QuizType = 'vocabulary' | 'grammar' | 'mixed' | 'reading' | 'listening';
 export type Difficulty = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 export type QuizStatus = 'idle' | 'active' | 'completed';
+export type QuestionType = 'vocabulary' | 'grammar' | 'reading' | 'listening';
+export type ReadingSubtype = 'main-idea' | 'detail' | 'inference' | 'vocabulary-in-context';
+export type ListeningSubtype = 'gist' | 'detail' | 'inference' | 'specific-information';
+
+export interface ReadingPassage {
+  id: string;
+  difficulty: Difficulty;
+  topic: string;
+  title: string;
+  text: string;
+}
+
+export interface ListeningClip {
+  id: string;
+  difficulty: Difficulty;
+  topic: string;
+  title: string;
+  script: string;
+}
 
 export interface Question {
   id: string;
-  type: 'vocabulary' | 'grammar';
+  type: QuestionType;
   difficulty: Difficulty;
   topic: string;
   question: string;
   options: string[];
   correctIndex: number;
   explanation: string;
+  passageId?: string;
+  subtype?: ReadingSubtype | ListeningSubtype;
+  clipId?: string;
 }
 
 export interface Answer {

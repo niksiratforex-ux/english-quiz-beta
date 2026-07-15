@@ -1,5 +1,6 @@
-import { createElement, clearElement } from '../renderer';
+﻿import { createElement, clearElement } from '../renderer';
 import { QuizResult, Question, Answer } from '../../core/types';
+import { getReadingPassages, getListeningClips } from '../../data';
 
 const FEEDBACK_FORM_PLACEHOLDER = "REPLACE_WITH_YOUR_GOOGLE_FORM_LINK";
 
@@ -35,10 +36,18 @@ export function renderResultScreen(
   header.appendChild(percentage);
 
   const levelCard = createElement('div', 'level-card');
-  const levelLabel = createElement('p', 'level-label', 'Your Level');
+  const isReading = result.quizType === 'reading';
+  const isListening = result.quizType === 'listening';
+  let levelLabelText = 'Your Level';
+  if (isReading) levelLabelText = 'Estimated Reading Level';
+  else if (isListening) levelLabelText = 'Estimated Listening Level';
+  const levelLabel = createElement('p', 'level-label', levelLabelText);
   const levelValue = createElement('h3', 'level-value', `${result.level} (${result.levelCode})`);
   const levelDescription = createElement('p', 'level-description', getLevelDescription(result.level));
-  const disclaimer = createElement('p', 'level-disclaimer', 'Estimated level based on this short practice quiz');
+  let disclaimerText = 'Estimated level based on this short practice quiz';
+  if (isReading) disclaimerText = 'Estimated reading level based on this short practice quiz';
+  else if (isListening) disclaimerText = 'Estimated listening level based on this short practice quiz';
+  const disclaimer = createElement('p', 'level-disclaimer', disclaimerText);
   levelCard.appendChild(levelLabel);
   levelCard.appendChild(levelValue);
   levelCard.appendChild(levelDescription);
@@ -84,6 +93,8 @@ function createSkillBreakdown(result: QuizResult): HTMLElement {
 
   const vocabQuestions = result.questions.filter(q => q.type === 'vocabulary');
   const grammarQuestions = result.questions.filter(q => q.type === 'grammar');
+  const readingQuestions = result.questions.filter(q => q.type === 'reading');
+  const listeningQuestions = result.questions.filter(q => q.type === 'listening');
 
   const vocabAnswers = result.answers.filter(a => {
     const q = result.questions.find(q => q.id === a.questionId);
@@ -93,25 +104,35 @@ function createSkillBreakdown(result: QuizResult): HTMLElement {
     const q = result.questions.find(q => q.id === a.questionId);
     return q && q.type === 'grammar';
   });
+  const readingAnswers = result.answers.filter(a => {
+    const q = result.questions.find(q => q.id === a.questionId);
+    return q && q.type === 'reading';
+  });
+  const listeningAnswers = result.answers.filter(a => {
+    const q = result.questions.find(q => q.id === a.questionId);
+    return q && q.type === 'listening';
+  });
 
   const vocabCorrect = vocabAnswers.filter(a => a.isCorrect).length;
   const grammarCorrect = grammarAnswers.filter(a => a.isCorrect).length;
+  const readingCorrect = readingAnswers.filter(a => a.isCorrect).length;
+  const listeningCorrect = listeningAnswers.filter(a => a.isCorrect).length;
 
   if (result.quizType === 'vocabulary') {
-    const row = createSkillRow('Vocabulary', vocabCorrect, vocabQuestions.length);
-    container.appendChild(row);
-    const note = createElement('p', 'skill-note', 'Based on vocabulary questions only');
-    container.appendChild(note);
+    container.appendChild(createSkillRow('Vocabulary', vocabCorrect, vocabQuestions.length));
+    container.appendChild(createElement('p', 'skill-note', 'Based on vocabulary questions only'));
   } else if (result.quizType === 'grammar') {
-    const row = createSkillRow('Grammar', grammarCorrect, grammarQuestions.length);
-    container.appendChild(row);
-    const note = createElement('p', 'skill-note', 'Based on grammar questions only');
-    container.appendChild(note);
+    container.appendChild(createSkillRow('Grammar', grammarCorrect, grammarQuestions.length));
+    container.appendChild(createElement('p', 'skill-note', 'Based on grammar questions only'));
+  } else if (result.quizType === 'reading') {
+    container.appendChild(createSkillRow('Reading', readingCorrect, readingQuestions.length));
+    container.appendChild(createElement('p', 'skill-note', 'Based on reading comprehension questions'));
+  } else if (result.quizType === 'listening') {
+    container.appendChild(createSkillRow('Listening', listeningCorrect, listeningQuestions.length));
+    container.appendChild(createElement('p', 'skill-note', 'Based on listening comprehension questions'));
   } else {
-    const vocabRow = createSkillRow('Vocabulary', vocabCorrect, vocabQuestions.length);
-    const grammarRow = createSkillRow('Grammar', grammarCorrect, grammarQuestions.length);
-    container.appendChild(vocabRow);
-    container.appendChild(grammarRow);
+    container.appendChild(createSkillRow('Vocabulary', vocabCorrect, vocabQuestions.length));
+    container.appendChild(createSkillRow('Grammar', grammarCorrect, grammarQuestions.length));
   }
 
   return container;
@@ -156,9 +177,42 @@ export function renderReviewScreen(
 
   const answersList = createElement('div', 'answers-list');
 
+  const passages = getReadingPassages();
+  const clips = getListeningClips();
+  let lastPassageId: string | null = null;
+  let lastClipId: string | null = null;
+
   questions.forEach((question, index) => {
     const answer = answers[index];
     const isCorrect = answer && answer.selectedIndex === question.correctIndex;
+
+    // Show passage header for reading questions when passage changes
+    if (question.type === 'reading' && question.passageId && question.passageId !== lastPassageId) {
+      lastPassageId = question.passageId;
+      const passage = passages.find(p => p.id === question.passageId);
+      if (passage) {
+        const passageHeader = createElement('div', 'review-passage-header');
+        const passageTitle = createElement('h3', 'review-passage-title', 'Passage: ' + passage.title);
+        const passageText = createElement('p', 'review-passage-text', passage.text);
+        passageHeader.appendChild(passageTitle);
+        passageHeader.appendChild(passageText);
+        answersList.appendChild(passageHeader);
+      }
+    }
+
+    // Show clip header for listening questions when clip changes
+    if (question.type === 'listening' && question.clipId && question.clipId !== lastClipId) {
+      lastClipId = question.clipId;
+      const clip = clips.find(c => c.id === question.clipId);
+      if (clip) {
+        const clipHeader = createElement('div', 'review-clip-header');
+        const clipTitle = createElement('h3', 'review-clip-title', 'Clip: ' + clip.title);
+        const clipScript = createElement('p', 'review-clip-script', clip.script);
+        clipHeader.appendChild(clipTitle);
+        clipHeader.appendChild(clipScript);
+        answersList.appendChild(clipHeader);
+      }
+    }
 
     const answerItem = createElement('div', `answer-item ${isCorrect ? 'correct' : 'incorrect'}`);
 
@@ -167,6 +221,10 @@ export function renderReviewScreen(
     const topicBadge = createElement('span', 'badge badge-topic', question.topic);
     meta.appendChild(typeBadge);
     meta.appendChild(topicBadge);
+    if (question.subtype) {
+      const subtypeBadge = createElement('span', 'badge badge-subtype', String(question.subtype));
+      meta.appendChild(subtypeBadge);
+    }
 
     const questionNumber = createElement('span', 'question-number', `Q${index + 1}`);
     const questionText = createElement('p', 'question-text', question.question);
