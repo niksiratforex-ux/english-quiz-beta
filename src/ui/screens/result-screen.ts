@@ -1,8 +1,12 @@
 import { createElement, clearElement } from '../renderer';
 import { QuizResult, Question, Answer } from '../../core/types';
 
-const FEEDBACK_FORM_URL = 'REPLACE_WITH_YOUR_GOOGLE_FORM_LINK';
+const FEEDBACK_FORM_PLACEHOLDER = "REPLACE_WITH_YOUR_GOOGLE_FORM_LINK";
 
+const FEEDBACK_FORM_URL: string =
+  "https://docs.google.com/forms/d/e/1FAIpQLSdJ_Ja0cMQL7pt1U6HMXLqvhzPKHwUL2iWLJeqN2nFEYL2-3g/viewform";
+
+const hasFeedbackForm = FEEDBACK_FORM_URL !== FEEDBACK_FORM_PLACEHOLDER;
 export interface ResultScreenCallbacks {
   onRestart: () => void;
   onReview: () => void;
@@ -58,7 +62,7 @@ export function renderResultScreen(
   screen.appendChild(skillBreakdown);
   screen.appendChild(actions);
 
-  if (FEEDBACK_FORM_URL !== 'REPLACE_WITH_YOUR_GOOGLE_FORM_LINK') {
+  if (hasFeedbackForm)  {
     const feedbackSection = createElement('div', 'feedback-section');
     const feedbackText = createElement('p', 'feedback-text',
       'Found an unclear question or a bug? Your feedback helps improve the quiz.'
